@@ -28,7 +28,14 @@ public class MUtils {
             while (cursor.moveToNext()) {
 
                 song = new Song();
-                song.song = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME));
+               String musicfullname = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME));
+               if (musicfullname.contains(".")){
+
+                   song.song = musicfullname.substring(0,musicfullname.indexOf("."));
+               }else {
+                   song.song = musicfullname;
+               }
+
                 song.singer = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST));
                 song.path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
                 song.duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION));

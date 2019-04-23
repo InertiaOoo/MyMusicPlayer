@@ -5,29 +5,45 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.ooo.deemo.mymusicplayer.Utils.MUtils;
-import com.ooo.deemo.mymusicplayer.Utils.MusicUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class FirstActivity extends AppCompatActivity {
+public class FirstActivity extends MyActivity implements View.OnClickListener {
+
+    private String TAG = "FirstActivity";
 
     private String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private AlertDialog dialog;
 
+    private static boolean mBackKeyPressed = false;
 
     private RecyclerView rv_log ;
 
@@ -35,36 +51,228 @@ public class FirstActivity extends AppCompatActivity {
 
 private List<Song> tl_List;
 
+private List<Song> searchList = new ArrayList<>();
+
+private Button pre_bt ;
+
+private Button play_bt;
+
+private Button next_bt;
+
+private EditText search_edit;
+
+private ImageButton search_bt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setStatusBarColor(getWindow(), 0xeef7f2, true);
         getPermission();
-        setContentView(R.layout.activity_second);
+        setContentView(R.layout.activity_first);
 
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(0xeef7f2);
 
-        tl_List = new ArrayList<>();
-        tl_List = MUtils.getmusic(this);
-rv_log =findViewById(R.id.rv_log);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        rv_log.setLayoutManager(layoutManager);
-        rv_log.setFocusableInTouchMode(true);
-        rAdapter = new MusicListAdapter(tl_List);
-        rv_log.setAdapter(rAdapter);
 
+initView();
+
+
+search_edit.addTextChangedListener(new TextWatcher() {
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+if(s.toString().length()!=0) {
+
+
+    searchMusic(s.toString());
+    Log.e(TAG, "afterTextChanged:" + s.toString());
+
+    rAdapter = new MusicListAdapter(searchList);
+    rv_log.setAdapter(rAdapter);
+    rAdapter.notifyDataSetChanged();
+}else {
+    search_edit.setCursorVisible(false);
+    rAdapter = new MusicListAdapter(tl_List);
+    rv_log.setAdapter(rAdapter);
+    rAdapter.notifyDataSetChanged();
+
+}
+
+    }
+});
 
 
     }
 
 
 
+    @Override
+    public void onBackPressed() {
+
+
+        Log.e(TAG,"onBackPressed");
+        search_edit.setCursorVisible(false);
+
+        if(!mBackKeyPressed){
+
+            Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+
+            mBackKeyPressed = true;
+
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    mBackKeyPressed = false;
+                }
+            },2000);
+        }else {
+
+            this.finish();
+            System.exit(0);
+        }
+    }
+
+    //注册控件
+private void initView(){
+
+    tl_List = new ArrayList<>();
+    tl_List = MUtils.getmusic(this);
+    rv_log =findViewById(R.id.rv_log);
+    LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+    rv_log.setLayoutManager(layoutManager);
+    rv_log.setFocusableInTouchMode(true);
+    rAdapter = new MusicListAdapter(tl_List);
+    rv_log.setAdapter(rAdapter);
+
+    search_edit = findViewById(R.id.search_edit);
+
+    search_bt = findViewById(R.id.search_bt);
+
+play_bt = findViewById(R.id.play_bt);
+
+pre_bt = findViewById(R.id.pre_bt);
+
+next_bt = findViewById(R.id.next_bt);
+
+play_bt.setOnClickListener(this);
+
+pre_bt.setOnClickListener(this);
+
+next_bt.setOnClickListener(this);
+
+search_bt.setOnClickListener(this);
+
+search_edit.setOnClickListener(this);
+
+}
 
 
 
 
 
+
+//注册点击事件
+    @Override
+    public void onClick(View v) {
+
+        switch (v.getId()){
+
+            case R.id.play_bt:
+if(MusicListAdapter.mPlayer.isPlaying()) {
+    Log.e(TAG,"pause");
+    play_bt.setText("PLAY");
+    MusicListAdapter.mPlayer.pause();
+}else {
+    Log.e(TAG,"start");
+    play_bt.setText("PAUSE");
+
+    MusicListAdapter.mPlayer.start();
+}
+                break;
+
+
+
+            case R.id.pre_bt:
+
+                Log.e(TAG,"pre");
+                MusicListAdapter.musicPre();
+
+
+                break;
+
+
+            case R.id.next_bt:
+                Log.e(TAG,"next");
+                MusicListAdapter.musicNext();
+
+
+
+                break;
+
+            case R.id.search_bt:
+
+                search_edit.setText("");
+                break;
+
+            case R.id.search_edit:
+
+          search_edit.setCursorVisible(true);
+
+                break;
+
+                default:
+
+
+                    break;
+
+        }
+    }
+
+
+
+
+
+    /*
+    歌曲搜索功能
+     */
+
+    private void searchMusic(String s){
+        int i = 0;
+         i = s.length();
+        searchList.clear();
+        String sLength = "";
+        Log.e(TAG,"String:"+s+"---s.length:"+i);
+Log.e(TAG, tl_List.get(0).song);
+        for (Song songitem : tl_List){
+            if(songitem.song.length()>i) {
+                sLength = songitem.song.substring(1, i + 1);
+
+                if (s.toUpperCase().equals(sLength.toUpperCase())) {
+
+                    searchList.add(songitem);
+
+                }
+
+            }
+            if(songitem.singer.length()>i){
+                sLength = songitem.singer.substring(0,i);
+                if (s.toUpperCase().equals(sLength.toUpperCase())){
+                    searchList.add(songitem);
+                }
+            }
+        }
+
+    }
 
 
     /*
@@ -218,5 +426,19 @@ rv_log =findViewById(R.id.rv_log);
             }
         }
     }
+
+
+
+    public static void setStatusBarColor(@NonNull Window window, @ColorInt int color, boolean colorIsLight) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.setStatusBarColor(color);
+        }if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int systemUiVisibility = window.getDecorView().getSystemUiVisibility();
+            if (colorIsLight) {
+                window.getDecorView().setSystemUiVisibility(systemUiVisibility | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);}
+                else {
+                    window.getDecorView().setSystemUiVisibility(systemUiVisibility ^ View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR); }}}
+
+
 
 }

@@ -17,7 +17,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends MyActivity{
 
 
     private String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
@@ -25,7 +25,6 @@ public class MainActivity extends AppCompatActivity{
     private AlertDialog dialog;
 
     int flag = 1;//设置一个标志，供点击“开始/暂停”按钮使用
-
 
 
 
@@ -45,8 +44,9 @@ startRequestPermission();
         bt_go.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this,FirstActivity.class);
-
+                Intent intent = new Intent();
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.setClass(MainActivity.this,FirstActivity.class);
                 startActivity(intent);
             }
         });

@@ -4,16 +4,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FirstActivity">
+    tools:context=".FirstActivity"
+    android:fitsSystemWindows="true"
+    android:background="#eef7f2"
+    >
 
 
+
+    <LinearLayout
+        android:id="@+id/search_layout"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_alignParentTop="true"
+
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:background="#eef7f2"
+        android:fitsSystemWindows="true"
+        >
+
+
+        <EditText
+            android:id="@+id/search_edit"
+            android:gravity="center"
+            android:background="@drawable/shape_corner"
+            android:layout_weight="9"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="5dp"
+
+            android:layout_marginTop="7dp"/>
+
+
+        <ImageButton
+            android:id="@+id/search_bt"
+            android:layout_weight="1"
+            android:layout_width="30dp"
+            android:background="@android:color/transparent"
+            android:layout_height="40dp"
+            android:scaleType="centerInside"
+            android:layout_marginTop="7dp"
+            android:src="@drawable/clean2"/>
+
+    </LinearLayout>
 
 
     <android.support.v7.widget.RecyclerView
 android:id="@+id/rv_log"
+        android:background="#ffffff"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignBottom="@+id/line_view"
+        android:layout_below="@+id/search_layout"
+
 
         >
 
@@ -44,12 +87,16 @@ android:id="@+id/rv_log"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Pre"
+        android:textSize="17sp"
+        android:background="#ffffff"
         />
     <Button
         android:id="@+id/play_bt"
         android:layout_weight="2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="#ffffff"
+        android:textSize="17sp"
         android:text="play"/>
 
     <Button
@@ -57,6 +104,8 @@ android:id="@+id/rv_log"
         android:layout_weight="1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="#ffffff"
+        android:textSize="17sp"
         android:text="next"/>
 
 

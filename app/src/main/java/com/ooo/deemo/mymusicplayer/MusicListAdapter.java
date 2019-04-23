@@ -1,12 +1,15 @@
 package com.ooo.deemo.mymusicplayer;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ooo.deemo.mymusicplayer.Utils.MusicUtils;
 
@@ -17,10 +20,12 @@ import java.util.List;
  * Have a good day
  */
 public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.ViewHolder> {
-
+public static MediaPlayer  mPlayer = new MediaPlayer();
     private Context context;
-    private List<Song> list;
+    private static List<Song> list;
     private int position_flag = 0;
+    private  static int currentposition = 0;
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
@@ -32,10 +37,10 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
 
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
 
-
-            Song song = list.get(position);
+        currentposition = position;
+            final Song song = list.get(position);
 
             holder.songView.setText(song.getSong());
 
@@ -47,6 +52,18 @@ public class MusicListAdapter extends RecyclerView.Adapter<MusicListAdapter.View
         holder.durationView.setText(time);
 
             holder.positionView.setText(position+1+"");
+
+holder.itemView.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View v) {
+
+
+mPlayer.stop();
+        musicPlay(position);
+
+    }
+});
+
 
     }
 
@@ -80,4 +97,49 @@ songView = itemView.findViewById(R.id.item_mymusic_song);
     public MusicListAdapter(List<Song> list) {
         this.list = list;
     }
+
+
+    public static void musicPlay(int position) {
+        try {
+mPlayer.stop();
+            mPlayer.reset();
+            mPlayer.setDataSource(list.get(position).getPath());
+            mPlayer.prepare();
+            mPlayer.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public static void musicNext() {
+        try {
+            currentposition++;
+            mPlayer.stop();
+            mPlayer.reset();
+            mPlayer.setDataSource(list.get(currentposition).getPath());
+            mPlayer.prepare();
+            mPlayer.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void musicPre() {
+        try {
+            currentposition--;
+            mPlayer.stop();
+            mPlayer.reset();
+            mPlayer.setDataSource(list.get(currentposition).getPath());
+            mPlayer.prepare();
+            mPlayer.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void musicSearch(){
+
+
+
+    }
+
 }
