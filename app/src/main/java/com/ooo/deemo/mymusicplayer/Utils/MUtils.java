@@ -6,6 +6,7 @@ import android.provider.MediaStore;
 
 import com.ooo.deemo.mymusicplayer.Song;
 
+import java.io.UTFDataFormatException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,8 @@ public class MUtils {
             while (cursor.moveToNext()) {
 
                 song = new Song();
-               String musicfullname = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME));
+               String musicfullname = (cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
+
                if (musicfullname.contains(".")){
 
                    song.song = musicfullname.substring(0,musicfullname.indexOf("."));
@@ -42,7 +44,7 @@ public class MUtils {
                 song.size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE));
 
 //                把歌曲名字和歌手切割开
-                if (song.size > 1000 * 800) {
+                if (song.size > 1000 * 800&&song.duration>0) {
                     if (song.song.contains("-")) {
                         String[] str = song.song.split("-");
                         song.singer = str[0];

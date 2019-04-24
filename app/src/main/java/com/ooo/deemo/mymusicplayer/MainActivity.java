@@ -7,24 +7,28 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class MainActivity extends MyActivity{
+import com.jaeger.library.StatusBarUtil;
 
+public class MainActivity extends MyActivity implements Runnable{
+    final Handler mHandler = new Handler();
 
     private String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private AlertDialog dialog;
 
-    int flag = 1;//设置一个标志，供点击“开始/暂停”按钮使用
+    int flag = 0;//设置一个标志，供点击“开始/暂停”按钮使用
 
 
 
@@ -35,27 +39,44 @@ private Button bt_go;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-startRequestPermission();
+        setContentView(R.layout.activity_main);
+        mHandler.postDelayed(this, 2000);
+
+
+
+
+        setStatusBar();
+
+
+
+
+
+
+
         bt_go = findViewById(R.id.bt_go);
 
 
         bt_go.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setClass(MainActivity.this,FirstActivity.class);
-                startActivity(intent);
+              jumpGo();
             }
         });
 
     }
 
+private void jumpGo(){
+    Intent intent = new Intent();
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+    intent.setClass(MainActivity.this,FirstActivity.class);
+    startActivity(intent);
+}
 
+    protected void setStatusBar() {
 
-
+        StatusBarUtil.setTransparent(this);
+    }
 
 
 
@@ -161,7 +182,9 @@ startRequestPermission();
                     } else
                         finish();
                 } else {
-                    Toast.makeText(this, "权限获取成功", Toast.LENGTH_SHORT).show();
+                    Log.e("","权限获取成功");
+                    flag = 1;
+                    jumpGo();
                 }
             }
         }
@@ -217,18 +240,18 @@ startRequestPermission();
                     if (dialog != null && dialog.isShowing()) {
                         dialog.dismiss();
                     }
-                    Toast.makeText(this, "权限获取成功", Toast.LENGTH_SHORT).show();
+
+                    Log.e("","权限获取成功");
+                    flag = 1;
+                    jumpGo();
                 }
             }
         }
     }
 
 
-
-
-
-
-
-
-
+    @Override
+    public void run() {
+        startRequestPermission();
+    }
 }

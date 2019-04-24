@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.MediaPlayer;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +36,6 @@ public static MediaPlayer  mPlayer = new MediaPlayer();
     }
 
 
-
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
 
@@ -64,8 +64,17 @@ mPlayer.stop();
     }
 });
 
+mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        musicNext();
+        Log.e("onCompletion","musicNext");
+    }
+});
 
     }
+
+
 
 
     @Override
@@ -101,15 +110,22 @@ songView = itemView.findViewById(R.id.item_mymusic_song);
 
     public static void musicPlay(int position) {
         try {
+
+
 mPlayer.stop();
+FirstActivity.play_bt.setText("PAUSE");
+
             mPlayer.reset();
             mPlayer.setDataSource(list.get(position).getPath());
             mPlayer.prepare();
             mPlayer.start();
+FirstActivity.getCurrentMusic(position);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     public static void musicNext() {
         try {
             currentposition++;

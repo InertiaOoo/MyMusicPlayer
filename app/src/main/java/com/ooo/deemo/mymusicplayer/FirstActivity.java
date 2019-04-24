@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -22,13 +23,18 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.jaeger.library.StatusBarUtil;
+import com.mxn.soul.flowingdrawer_core.ElasticDrawer;
+import com.mxn.soul.flowingdrawer_core.FlowingDrawer;
 import com.ooo.deemo.mymusicplayer.Utils.MUtils;
 
 import java.util.ArrayList;
@@ -49,13 +55,13 @@ public class FirstActivity extends MyActivity implements View.OnClickListener {
 
    private MusicListAdapter rAdapter;
 
-private List<Song> tl_List;
+private static List<Song> tl_List;
 
 private List<Song> searchList = new ArrayList<>();
 
 private Button pre_bt ;
 
-private Button play_bt;
+public static Button play_bt;
 
 private Button next_bt;
 
@@ -63,16 +69,27 @@ private EditText search_edit;
 
 private ImageButton search_bt;
 
+private ImageButton flow_bt;
+
+    private FlowingDrawer mDrawer;
+
+
+    //
+
+    private static String currentSong;
+
+    private static String currentSinger;
+
+    private static int currentTime;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStatusBarColor(getWindow(), 0xeef7f2, true);
-        getPermission();
+
         setContentView(R.layout.activity_first);
 
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        getWindow().setStatusBarColor(0xeef7f2);
+        setStatusBar();
 
 
 initView();
@@ -102,6 +119,8 @@ if(s.toString().length()!=0) {
     rAdapter.notifyDataSetChanged();
 }else {
     search_edit.setCursorVisible(false);
+
+
     rAdapter = new MusicListAdapter(tl_List);
     rv_log.setAdapter(rAdapter);
     rAdapter.notifyDataSetChanged();
@@ -111,11 +130,29 @@ if(s.toString().length()!=0) {
     }
 });
 
+//侧边栏flower
+
+        mDrawer.setOnDrawerStateChangeListener(new ElasticDrawer.OnDrawerStateChangeListener() {
+            @Override
+            public void onDrawerStateChange(int oldState, int newState) {
+                if (newState == ElasticDrawer.STATE_CLOSED) {
+                    Log.e("FirstActivity", "Drawer STATE_CLOSED");
+                }
+            }
+            @Override
+            public void onDrawerSlide(float openRatio, int offsetPixels) {
+                Log.e("FirstActivity", "openRatio=" + openRatio + " ,offsetPixels=" + offsetPixels);
+            }
+        });
 
     }
 
+    //状态栏透明
+    protected void setStatusBar() {
+        StatusBarUtil.setTransparent(this);
+    }
 
-
+//双击返回键退出程序
     @Override
     public void onBackPressed() {
 
@@ -154,6 +191,10 @@ private void initView(){
     rAdapter = new MusicListAdapter(tl_List);
     rv_log.setAdapter(rAdapter);
 
+    mDrawer = findViewById(R.id.drawerlayout);
+    mDrawer.setTouchMode(ElasticDrawer.TOUCH_MODE_BEZEL);
+
+
     search_edit = findViewById(R.id.search_edit);
 
     search_bt = findViewById(R.id.search_bt);
@@ -163,6 +204,8 @@ play_bt = findViewById(R.id.play_bt);
 pre_bt = findViewById(R.id.pre_bt);
 
 next_bt = findViewById(R.id.next_bt);
+
+flow_bt = findViewById(R.id.flow_bt);
 
 play_bt.setOnClickListener(this);
 
@@ -174,14 +217,17 @@ search_bt.setOnClickListener(this);
 
 search_edit.setOnClickListener(this);
 
+flow_bt.setOnClickListener(this);
+
+
+currentSong = "当前无音乐";
+currentSinger = "--";
+currentTime = 0;
 }
 
 
 
-
-
-
-//注册点击事件
+//实现点击事件
     @Override
     public void onClick(View v) {
 
@@ -190,9 +236,12 @@ search_edit.setOnClickListener(this);
             case R.id.play_bt:
 if(MusicListAdapter.mPlayer.isPlaying()) {
     Log.e(TAG,"pause");
+
     play_bt.setText("PLAY");
+
     MusicListAdapter.mPlayer.pause();
 }else {
+
     Log.e(TAG,"start");
     play_bt.setText("PAUSE");
 
@@ -207,29 +256,45 @@ if(MusicListAdapter.mPlayer.isPlaying()) {
                 Log.e(TAG,"pre");
                 MusicListAdapter.musicPre();
 
-
+                play_bt.setText("PAUSE");
                 break;
 
 
             case R.id.next_bt:
                 Log.e(TAG,"next");
                 MusicListAdapter.musicNext();
-
+                play_bt.setText("PAUSE");
 
 
                 break;
 
             case R.id.search_bt:
 
+                if(search_edit.getText()==null){
+                    search_edit.setCursorVisible(false);
+
+                }
+
                 search_edit.setText("");
+
                 break;
 
             case R.id.search_edit:
 
           search_edit.setCursorVisible(true);
 
+
+
+
                 break;
 
+
+            case R.id.flow_bt:
+
+                mDrawer.openMenu(true,500);
+
+
+                break;
                 default:
 
 
@@ -239,6 +304,19 @@ if(MusicListAdapter.mPlayer.isPlaying()) {
     }
 
 
+/*
+获取当前播放
+ */
+
+public static void getCurrentMusic(int position){
+
+    currentSong = tl_List.get(position).song;
+
+    currentSinger = tl_List.get(position).singer;
+    currentTime = tl_List.get(position).duration;
+
+
+}
 
 
 
@@ -275,169 +353,9 @@ Log.e(TAG, tl_List.get(0).song);
     }
 
 
-    /*
-   获取权限
-    */
-    private void getPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // 检查该权限是否已经获取
-            for (int i = 0; i < permissions.length; i++) {
-                int j = ContextCompat.checkSelfPermission(this, permissions[i]);
-                // 权限是否已经 授权 GRANTED---授权  DINIED---拒绝
-                if (j != PackageManager.PERMISSION_GRANTED) {
-                    // 如果没有授予该权限，就去提示用户请求
-                    showDialogTipUserRequestPermission(i);
-                }
-            }
-        }
-    }
-
-    /*
-          权限申请
-           */
-    private void showDialogTipUserRequestPermission(int i) {
-        String str_1 = "";
-        String str_2 = "";
-        switch (i) {
-            case 0:
-                str_1 = "位置权限不可用";
-                str_2 = "由于需要获取位置权限信息；\n否则，您将无法正常使用";
-                break;
-            case 1:
-                str_1 = "位置权限不可用";
-                str_2 = "由于需要位置权限信息；\n否则，您将无法正常使用";
-                break;
-            case 2:
-                str_1 = "在SDCard中创建与删除文件权限不可用";
-                str_2 = "在SDCard中创建与删除文件权限；\n否则，您将无法正常使用";
-                break;
-            case 3:
-                str_1 = "往SDCard写入数据权限不可用";
-                str_2 = "往SDCard写入数据权限；\n否则，您将无法正常使用";
-                break;
-            case 4:
-                str_1 = "往SDCard读出数据权限不可用";
-                str_2 = "往SDCard读出数据权限；\n否则，您将无法正常使用";
-                break;
-
-            default:
-                break;
-        }
-
-
-        new AlertDialog.Builder(this)
-                .setTitle(str_1)
-                .setMessage(str_2)
-                .setPositiveButton("立即开启", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startRequestPermission();
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-                }).setCancelable(false).show();
-    }
-
-
-    // 开始提交请求权限
-    private void startRequestPermission() {
-        ActivityCompat.requestPermissions(this, permissions, 321);
-    }
-
-    // 用户权限 申请 的回调方法
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == 321) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    // 判断用户是否 点击了不再提醒。(检测该权限是否还可以申请)
-                    boolean b = shouldShowRequestPermissionRationale(permissions[0]);
-                    if (!b) {
-                        // 用户还是想用我的 APP 的
-                        // 提示用户去应用设置界面手动开启权限
-                        showDialogTipUserGoToAppSetting();
-                    } else
-                        finish();
-                } else {
-                    Toast.makeText(this, "权限获取成功", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-    }
-
-    // 提示用户去应用设置界面手动开启权限
-
-    private void showDialogTipUserGoToAppSetting() {
-
-        dialog = new AlertDialog.Builder(this)
-                .setTitle("存储权限不可用")
-                .setMessage("请在-应用设置-权限-中，允许支付宝使用存储权限来保存用户数据")
-                .setPositiveButton("立即开启", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // 跳转到应用设置界面
-                        goToAppSetting();
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-                }).setCancelable(false).show();
-    }
-
-    // 跳转到当前应用的设置界面
-    private void goToAppSetting() {
-        Intent intent = new Intent();
-
-        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        Uri uri = Uri.fromParts("package", getPackageName(), null);
-        intent.setData(uri);
-
-        startActivityForResult(intent, 123);
-    }
-
-    //
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 123) {
-
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // 检查该权限是否已经获取
-                int i = ContextCompat.checkSelfPermission(this, permissions[0]);
-                // 权限是否已经 授权 GRANTED---授权  DINIED---拒绝
-                if (i != PackageManager.PERMISSION_GRANTED) {
-                    // 提示用户应该去应用设置界面手动开启权限
-                    showDialogTipUserGoToAppSetting();
-                } else {
-                    if (dialog != null && dialog.isShowing()) {
-                        dialog.dismiss();
-                    }
-                    Toast.makeText(this, "权限获取成功", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-    }
 
 
 
-    public static void setStatusBarColor(@NonNull Window window, @ColorInt int color, boolean colorIsLight) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(color);
-        }if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int systemUiVisibility = window.getDecorView().getSystemUiVisibility();
-            if (colorIsLight) {
-                window.getDecorView().setSystemUiVisibility(systemUiVisibility | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);}
-                else {
-                    window.getDecorView().setSystemUiVisibility(systemUiVisibility ^ View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR); }}}
 
 
 
