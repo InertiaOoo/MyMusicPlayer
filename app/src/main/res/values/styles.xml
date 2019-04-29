@@ -11,11 +11,11 @@
     </style>
 
 
+    <style name="WelcomeThem" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/welcome</item>
+    </style>
 
 
 
-
-
-    <style name="AppTheme.Main" parent="AppTheme" />
 
 </resources>
