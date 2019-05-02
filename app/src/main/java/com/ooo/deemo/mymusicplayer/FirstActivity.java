@@ -2,34 +2,23 @@ package com.ooo.deemo.mymusicplayer;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
-import android.net.Uri;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Rect;
 import android.os.Build;
-import android.provider.Settings;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.jaeger.library.StatusBarUtil;
@@ -37,10 +26,14 @@ import com.mxn.soul.flowingdrawer_core.ElasticDrawer;
 import com.mxn.soul.flowingdrawer_core.FlowingDrawer;
 import com.ooo.deemo.mymusicplayer.Utils.MUtils;
 
+import org.litepal.LitePal;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FirstActivity extends MyActivity implements View.OnClickListener {
 
@@ -73,6 +66,7 @@ private ImageButton flow_bt;
 
     private FlowingDrawer mDrawer;
 
+    private Button goCreateList;
 
     //
 
@@ -82,6 +76,11 @@ private ImageButton flow_bt;
 
     private static int currentTime;
 
+    private List<Song> songs ;
+
+    SQLiteDatabase db = LitePal.getDatabase();
+
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,7 +88,7 @@ private ImageButton flow_bt;
 
         setContentView(R.layout.activity_first);
 
-        setStatusBar();
+//        setStatusBar();
 hideBottomUIMenu();
 
 initView();
@@ -145,10 +144,46 @@ if(s.toString().length()!=0) {
             }
         });
 
+
+        final View cv = this.getWindow().getDecorView();
+
+        Log.e("0000",String.valueOf(cv.toString()));
+
+        Rect rect = new Rect();
+        cv.getWindowVisibleDisplayFrame(rect);
+        int rootInvisibleHeight = cv.getRootView().getHeight() - rect.bottom;
+        if (rootInvisibleHeight <= 100) {
+            //软键盘隐藏啦
+           Log.e("11111111","111111111");
+        } else {
+            ////软键盘弹出啦
+           Log.e("2222222222","222222222");
+           hideBottomUIMenu();
+        }
+
+
+
     }
 
 
-    //隐藏底部栏
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                //有按下动作时取消定时
+              hideBottomUIMenu();
+                break;
+            case MotionEvent.ACTION_UP:
+                //抬起时启动定时
+               hideBottomUIMenu();
+                break;
+        }
+
+
+        return super.dispatchTouchEvent(ev);
+    }
+
+    //隐藏导航栏
     protected void hideBottomUIMenu() {
         //隐藏虚拟按键，并且全屏
         if (Build.VERSION.SDK_INT > 11 && Build.VERSION.SDK_INT < 19) { // lower api
@@ -172,6 +207,7 @@ if(s.toString().length()!=0) {
     @Override
     public void onBackPressed() {
 
+        hideBottomUIMenu();
 
         Log.e(TAG,"onBackPressed");
         search_edit.setCursorVisible(false);
@@ -197,16 +233,17 @@ if(s.toString().length()!=0) {
 
     //注册控件
 private void initView(){
+    songs = LitePal.findAll(Song.class);
 
     tl_List = new ArrayList<>();
-    tl_List = MUtils.getmusic(this);
+//    tl_List = MUtils.getmusic(this);
     rv_log =findViewById(R.id.rv_log);
     LinearLayoutManager layoutManager = new LinearLayoutManager(this);
     rv_log.setLayoutManager(layoutManager);
     rv_log.setFocusableInTouchMode(true);
     rAdapter = new MusicListAdapter(tl_List);
     rv_log.setAdapter(rAdapter);
-
+    getFullMusic();
     mDrawer = findViewById(R.id.drawerlayout);
     mDrawer.setTouchMode(ElasticDrawer.TOUCH_MODE_BEZEL);
 
@@ -222,6 +259,10 @@ pre_bt = findViewById(R.id.pre_bt);
 next_bt = findViewById(R.id.next_bt);
 
 flow_bt = findViewById(R.id.flow_bt);
+
+goCreateList = findViewById(R.id.goCreateList);
+
+goCreateList.setOnClickListener(this);
 
 play_bt.setOnClickListener(this);
 
@@ -240,6 +281,93 @@ currentSong = "当前无音乐";
 currentSinger = "--";
 currentTime = 0;
 }
+
+
+
+Handler handler = new Handler(){
+    @Override
+    public void handleMessage(Message msg) {
+
+        switch (msg.what){
+            case 0x01:
+                Toast.makeText(FirstActivity.this, "music initing", Toast.LENGTH_SHORT).show();
+
+                Log.e("","inginging");
+
+                break;
+
+            case  0x02:
+
+                Toast.makeText(FirstActivity.this, "init done", Toast.LENGTH_SHORT).show();
+                Log.e("","donedonedonedone");
+                rv_log.setAdapter(rAdapter);
+                rAdapter.notifyDataSetChanged();
+                break;
+
+
+                default:
+
+                    break;
+
+
+        }
+    }
+};
+
+    Thread thread1 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            handler.sendEmptyMessage(0x01);
+            tl_List = MUtils.getmusic(FirstActivity.this);
+
+
+        }
+    });
+
+    Thread thread2 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                thread1.join();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            rAdapter = new MusicListAdapter(tl_List);
+
+            handler.sendEmptyMessage(0x02);
+        }
+    });
+
+
+
+
+    private void getFullMusic(){
+
+   tl_List.clear();
+
+
+    if (songs.isEmpty()){
+
+        thread1.start();
+     thread2.start();
+//executor.submit(thread1);
+//        executor.submit(thread2);
+//        tl_List = MUtils.getmusic(FirstActivity.this);
+
+    }else {
+        for (Song songitem : songs) {
+
+            tl_List.add(songitem);
+
+        }
+    }
+
+    }
+
+
+
+
 
 
 
@@ -311,6 +439,19 @@ if(MusicListAdapter.mPlayer.isPlaying()) {
 
 
                 break;
+
+
+            case R.id.goCreateList:
+                Intent intent = new Intent(FirstActivity.this, TheMainActivity.class);
+
+                startActivity(intent);
+
+
+
+                break;
+
+
+
                 default:
 
 
@@ -326,10 +467,10 @@ if(MusicListAdapter.mPlayer.isPlaying()) {
 
 public static void getCurrentMusic(int position){
 
-    currentSong = tl_List.get(position).song;
+    currentSong = tl_List.get(position).getSong();
 
-    currentSinger = tl_List.get(position).singer;
-    currentTime = tl_List.get(position).duration;
+    currentSinger = tl_List.get(position).getSinger();
+    currentTime = tl_List.get(position).getDuration();
 
 
 }
@@ -342,14 +483,16 @@ public static void getCurrentMusic(int position){
 
     private void searchMusic(String s){
         int i = 0;
+
+
          i = s.length();
         searchList.clear();
         String sLength = "";
         Log.e(TAG,"String:"+s+"---s.length:"+i);
-Log.e(TAG, tl_List.get(0).song);
+Log.e(TAG, tl_List.get(0).getSong());
         for (Song songitem : tl_List){
-            if(songitem.song.length()>i) {
-                sLength = songitem.song.substring(1, i + 1);
+            if(songitem.getSong().length()>i) {
+                sLength = songitem.getSong().substring(1, i + 1);
 
                 if (s.toUpperCase().equals(sLength.toUpperCase())) {
 
@@ -359,7 +502,7 @@ Log.e(TAG, tl_List.get(0).song);
 
             }
             if(songitem.singer.length()>i){
-                sLength = songitem.singer.substring(0,i);
+                sLength = songitem.getSinger().substring(0,i);
                 if (s.toUpperCase().equals(sLength.toUpperCase())){
                     searchList.add(songitem);
                 }
@@ -369,7 +512,37 @@ Log.e(TAG, tl_List.get(0).song);
     }
 
 
+//从litepal数据库搜索
+    private void searchMusicdb(String s){
+        int i = 0;
+        i = s.length();
+        String sLength = "";
+        searchList.clear();
 
+
+        for (Song songitem: songs){
+            if(songitem.getSong().length()>i){
+                sLength = songitem.getSong().substring(1,i+1);
+
+                if (s.toUpperCase().equals(sLength.toUpperCase())) {
+
+                    searchList.add(songitem);
+
+                }
+            }
+            if(songitem.getSinger().length()>i){
+                sLength = songitem.getSinger().substring(0,i);
+                if (s.toUpperCase().equals(sLength.toUpperCase())){
+                    searchList.add(songitem);
+                }
+            }
+
+
+        }
+
+
+
+    }
 
 
 
