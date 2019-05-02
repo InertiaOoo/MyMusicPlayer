@@ -1,11 +1,15 @@
 package com.ooo.deemo.mymusicplayer;
 
+import org.litepal.LitePal;
+import org.litepal.crud.LitePalSupport;
+
 /**
  * Author by Deemo, Date on 2019/4/22.
  * Have a good day
  */
-public class Song {
+public class Song extends LitePalSupport {
 
+    public int ID;
     /** * 歌手 */
     public String singer;
     /** * 歌曲名 */
@@ -16,6 +20,15 @@ public class Song {
     public int duration;
     /** * 歌曲的大小 */
     public long size;
+
+
+    public int getID() {
+        return ID;
+    }
+
+    public void setID(int ID) {
+        this.ID = ID;
+    }
 
     public String getSinger() {
         return singer;

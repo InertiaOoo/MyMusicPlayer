@@ -2,9 +2,12 @@ package com.ooo.deemo.mymusicplayer.Utils;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.provider.MediaStore;
 
 import com.ooo.deemo.mymusicplayer.Song;
+
+import org.litepal.LitePal;
 
 import java.io.UTFDataFormatException;
 import java.util.ArrayList;
@@ -17,6 +20,7 @@ public class MUtils {
     public static Song song;
 
 
+
     public static List<Song> getmusic(Context context) {
 
         list = new ArrayList<>();
@@ -26,33 +30,37 @@ public class MUtils {
                 , null, null, null, MediaStore.Audio.AudioColumns.IS_MUSIC);
 
         if (cursor != null) {
+            int cusId = 0;
             while (cursor.moveToNext()) {
 
                 song = new Song();
+                song.setID(cusId++);
                String musicfullname = (cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
 
                if (musicfullname.contains(".")){
+song.setSong(musicfullname.substring(0,musicfullname.indexOf(".")));
 
-                   song.song = musicfullname.substring(0,musicfullname.indexOf("."));
                }else {
-                   song.song = musicfullname;
-               }
+                   song.setSong(musicfullname);
 
-                song.singer = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST));
-                song.path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
-                song.duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION));
-                song.size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE));
+               }
+song.setSinger(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)));
+                song.setPath(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
+              song.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)));
+               song.setSize(song.size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)));
+
 
 //                把歌曲名字和歌手切割开
-                if (song.size > 1000 * 800&&song.duration>0) {
-                    if (song.song.contains("-")) {
-                        String[] str = song.song.split("-");
-                        song.singer = str[0];
-                        song.song = str[1];
+                if (song.getSize() > 1000 * 800&&song.getDuration()>0) {
+                    if (song.getSong().contains("-")) {
+                        String[] str = song.getSong().split("-");
+                        song.setSinger(str[0]);
+                        song.setSong( str[1]);
                     }
                     list.add(song);
                 }
 
+                song.save();
             }
         }
 

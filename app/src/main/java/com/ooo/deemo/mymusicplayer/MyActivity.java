@@ -4,6 +4,8 @@ import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import org.litepal.LitePal;
+
 public class MyActivity extends AppCompatActivity {
 
     private static Context mContext;
@@ -12,6 +14,7 @@ public class MyActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         mContext = getApplicationContext();
+        LitePal.initialize(this);
     }
 
 public static Context getContext(){

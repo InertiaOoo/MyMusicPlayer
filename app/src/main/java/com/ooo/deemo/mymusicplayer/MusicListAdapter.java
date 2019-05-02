@@ -58,7 +58,7 @@ holder.itemView.setOnClickListener(new View.OnClickListener() {
     public void onClick(View v) {
 
 
-mPlayer.stop();
+
         musicPlay(position);
 
     }
